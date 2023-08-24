@@ -311,7 +311,7 @@ NSString *const kMessagingPresentationOptionsUserDefaults =
              (void (^)(UNNotificationPresentationOptions options))completionHandler
     API_AVAILABLE(macos(10.14), ios(10.0)) {
   // We only want to handle FCM notifications.
-  if (notification.request.content.userInfo[@"gcm.message_id"]) {
+  if (notification.request.content.userInfo[@"gcm.message_id"] || notification.request.content.userInfo[@"kNotificationChannelType"]) {
     NSDictionary *notificationDict =
         [FLTFirebaseMessagingPlugin NSDictionaryFromUNNotification:notification];
 
@@ -339,7 +339,12 @@ NSString *const kMessagingPresentationOptionsUserDefaults =
         presentationOptions |= UNNotificationPresentationOptionSound;
       }
     }
-    completionHandler(presentationOptions);
+    
+    if (notification.request.content.userInfo[@"gcm.message_id"]) {
+        completionHandler(presentationOptions);
+    } else {
+        completionHandler(UNNotificationPresentationOptionAlert);
+    }
   }
 }
 
@@ -352,8 +357,8 @@ NSString *const kMessagingPresentationOptionsUserDefaults =
   _notificationOpenedAppID = remoteNotification[@"gcm.message_id"];
   // We only want to handle FCM notifications and stop firing `onMessageOpenedApp()` when app is
   // coming from a terminated state.
-  if (_notificationOpenedAppID != nil &&
-      ![_initialNoticationID isEqualToString:_notificationOpenedAppID]) {
+  if ((_notificationOpenedAppID != nil &&
+      ![_initialNoticationID isEqualToString:_notificationOpenedAppID]) || remoteNotification[@"kNotificationChannelType"]) {
     NSDictionary *notificationDict =
         [FLTFirebaseMessagingPlugin remoteMessageUserInfoToDict:remoteNotification];
     [_channel invokeMethod:@"Messaging#onMessageOpenedApp" arguments:notificationDict];
