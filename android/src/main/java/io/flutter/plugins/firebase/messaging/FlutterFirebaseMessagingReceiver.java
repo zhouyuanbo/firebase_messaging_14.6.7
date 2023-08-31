@@ -14,6 +14,7 @@ import java.util.HashMap;
 
 public class FlutterFirebaseMessagingReceiver extends BroadcastReceiver {
   private static final String TAG = "FLTFireMsgReceiver";
+  private static final String Silent_Flag = "silent";
   static HashMap<String, RemoteMessage> notifications = new HashMap<>();
 
   @Override
@@ -42,6 +43,14 @@ public class FlutterFirebaseMessagingReceiver extends BroadcastReceiver {
     //      App in Foreground
     //   ------------------------
     if (FlutterFirebaseMessagingUtils.isApplicationForeground(context)) {
+      Intent onMessageIntent = new Intent(FlutterFirebaseMessagingUtils.ACTION_REMOTE_MESSAGE);
+      onMessageIntent.putExtra(FlutterFirebaseMessagingUtils.EXTRA_REMOTE_MESSAGE, remoteMessage);
+      LocalBroadcastManager.getInstance(context).sendBroadcast(onMessageIntent);
+      return;
+    }
+
+    //如果是静默推送
+    if (remoteMessage.getData().containsKey(Silent_Flag)&&remoteMessage.getData().containsKey("content_available")) {
       Intent onMessageIntent = new Intent(FlutterFirebaseMessagingUtils.ACTION_REMOTE_MESSAGE);
       onMessageIntent.putExtra(FlutterFirebaseMessagingUtils.EXTRA_REMOTE_MESSAGE, remoteMessage);
       LocalBroadcastManager.getInstance(context).sendBroadcast(onMessageIntent);

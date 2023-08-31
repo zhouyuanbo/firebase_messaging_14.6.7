@@ -137,9 +137,23 @@ public class FlutterFirebaseMessagingPlugin extends BroadcastReceiver
         message = intent.getParcelableExtra(FlutterFirebaseMessagingUtils.EXTRA_REMOTE_MESSAGE);
       }
       if (message == null) return;
-      Map<String, Object> content = FlutterFirebaseMessagingUtils.remoteMessageToMap(message);
+      Map<String, Object> content;
+      if(isSilentNotification(message)){
+        content=new HashMap<>();
+        content.put("contentAvailable",true);
+      }else{
+        content = FlutterFirebaseMessagingUtils.remoteMessageToMap(message);
+      }
       channel.invokeMethod("Messaging#onMessage", content);
     }
+  }
+
+  //判断是否是静默推送。静默推送只携带notification，且为null。
+  private boolean isSilentNotification(RemoteMessage message){
+    if(message.getData().containsKey("silent") && message.getData().containsKey("content_available") ){
+      return true;
+    }
+    return false;
   }
 
   private Task<Void> deleteToken() {
@@ -555,6 +569,38 @@ public class FlutterFirebaseMessagingPlugin extends BroadcastReceiver
     String messageId = intent.getExtras().getString("google.message_id");
     if (messageId == null) messageId = intent.getExtras().getString("message_id");
     if (messageId == null) {
+      String userInfo = (String)intent.getExtras().getString("userInfo");
+      String openCollectible = (String)intent.getExtras().getString("crossroads");
+
+      if(userInfo != null){
+//            HashMap<String, Object> map = new Gson().fromJson(userInfo, HashMap.class);
+
+        HashMap<String, String> data = new HashMap<String, String>();
+        data.put("openAppData", userInfo);
+
+        RemoteMessage remoteMessage = new RemoteMessage.Builder(GIMBAL_FLAG).setData(data).build();
+
+        initialMessage = remoteMessage;
+
+        channel.invokeMethod(
+                "Messaging#onMessageOpenedApp",
+                FlutterFirebaseMessagingUtils.remoteMessageToMap(remoteMessage));
+        mainActivity.setIntent(intent);
+        return true;
+      }else if(openCollectible!=null){
+        HashMap<String, String> data = new HashMap<String, String>();
+        data.put("openAppData", openCollectible);
+
+        RemoteMessage remoteMessage = new RemoteMessage.Builder(GIMBAL_FLAG).setData(data).build();
+
+        initialMessage = remoteMessage;
+
+        channel.invokeMethod(
+                "Messaging#onMessageOpenedApp",
+                FlutterFirebaseMessagingUtils.remoteMessageToMap(remoteMessage));
+        mainActivity.setIntent(intent);
+        return true;
+      }
       return false;
     }
 
