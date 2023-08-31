@@ -60,6 +60,8 @@ public class FlutterFirebaseMessagingPlugin extends BroadcastReceiver
 
   FlutterFirebasePermissionManager permissionManager;
 
+  public static final String GIMBAL_FLAG = "GIMBAL_FLAG";
+
   private void initInstance(BinaryMessenger messenger) {
     String channelName = "plugins.flutter.io/firebase_messaging";
     channel = new MethodChannel(messenger, channelName);
